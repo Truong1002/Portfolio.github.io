@@ -94,7 +94,20 @@
       height: 50px;
       width: 50px;
       background: var(--chat--toggle--background);
-      color: var(--chat--toggle--color);
+      color: #fb6a18;
+      border: none;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .chat-input-send-button[data-v-de5e7961] {
+      height: 50px;
+      width: 50px;
+      color: #fb6a18;
       border: none;
       border-radius: 0.25rem;
       display: flex;
@@ -309,6 +322,39 @@
   display: flex;
 }
 
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .floating-voice-button {
+    width: 70px;
+    height: 70px;
+    bottom: 100px;
+    right: 15px;
+  }
+  
+  .floating-voice-button svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .voice-status {
+    font-size: 16px !important;
+    padding: 15px 20px !important;
+    border-radius: 10px !important;
+    max-width: 85vw !important;
+  }
+  
+  .chat-voice-input-button, .chat-file-input-button {
+    width: 55px;
+    height: 55px;
+    margin-left: 0.25rem;
+  }
+  
+  .chat-voice-input-button svg, .chat-file-input-button svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
   </style>
 
   <script type="module">
@@ -337,6 +383,9 @@
     // Voice Input Functionality
     let recognition = null;
     let isRecording = false;
+    
+    // Phát hiện mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     function initVoiceInput() {
       // Kiểm tra Web Speech API support
@@ -344,9 +393,17 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         
-        recognition.continuous = false;
-        recognition.interimResults = true;
+        // Cài đặt tối ưu cho mobile
+        
+        recognition.continuous = false; // Không continuous để tránh chập chờn
+        recognition.interimResults = !isMobile; // Tắt interim results trên mobile
         recognition.lang = 'vi-VN'; // Tiếng Việt
+        recognition.maxAlternatives = 1; // Chỉ lấy 1 kết quả tốt nhất
+        
+        if (isMobile) {
+          // Cài đặt đặc biệt cho mobile
+          recognition.serviceURI = null; // Sử dụng service mặc định
+        }
         
         recognition.onstart = function() {
           isRecording = true;
@@ -371,8 +428,9 @@
           let finalTranscript = '';
           let interimTranscript = '';
           
+          // Xử lý kết quả từ speech recognition
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
+            const transcript = event.results[i][0].transcript.trim();
             if (event.results[i].isFinal) {
               finalTranscript += transcript;
             } else {
@@ -383,9 +441,22 @@
           const textarea = document.querySelector('.chat-inputs textarea');
           if (textarea) {
             if (finalTranscript) {
+              // Chỉ cập nhật khi có final transcript
               textarea.value = finalTranscript;
-              // Trigger input event để chat widget nhận diện có text
               textarea.dispatchEvent(new Event('input', { bubbles: true }));
+              
+              // Tự động dừng recognition sau khi có kết quả (mobile friendly)
+              if (isMobile && recognition && isRecording) {
+                setTimeout(() => {
+                  recognition.stop();
+                }, 100);
+              }
+            } else if (interimTranscript && !isMobile) {
+              // Chỉ hiển thị interim trên desktop
+              const currentValue = textarea.value;
+              if (!currentValue.includes(interimTranscript)) {
+                textarea.placeholder = interimTranscript;
+              }
             }
           }
         };
@@ -406,6 +477,10 @@
           }
           if (textarea) {
             textarea.classList.remove('listening');
+            // Reset placeholder trên mobile
+            if (isMobile && textarea.placeholder !== 'Nhập câu hỏi của bạn...') {
+              textarea.placeholder = 'Nhập câu hỏi của bạn...';
+            }
           }
         };
         
@@ -448,6 +523,13 @@
       
       // Thêm nút voice input vào chat interface
       addVoiceButton();
+      
+      // Hiển thị hướng dẫn cho mobile
+      if (isMobile) {
+        setTimeout(() => {
+          showVoiceStatus('💡 Tip: Nói rõ ràng và chậm rãi trên mobile', 'info');
+        }, 2000);
+      }
     }
     
     function addVoiceButton() {
@@ -523,8 +605,39 @@
         recognition.stop();
         showVoiceStatus('Đã dừng ghi âm', 'success');
       } else {
-        recognition.start();
-        showVoiceStatus('Bắt đầu ghi âm...', 'info');
+        try {
+          // Reset recognition trên mobile để tránh lỗi
+          if (isMobile) {
+            recognition.abort();
+            setTimeout(() => {
+              recognition.start();
+            }, 100);
+          } else {
+            recognition.start();
+          }
+          
+          showVoiceStatus(isMobile ? 'Đang nghe... Nói rõ ràng' : 'Bắt đầu ghi âm...', 'info');
+          
+          // Thêm timeout cho mobile để tránh treo
+          if (isMobile) {
+            setTimeout(() => {
+              if (isRecording) {
+                recognition.stop();
+                showVoiceStatus('Hết thời gian ghi âm', 'warning');
+              }
+            }, 15000); // 15 giây timeout
+          }
+        } catch (error) {
+          console.error('Error starting recognition:', error);
+          showVoiceStatus('Lỗi khởi động microphone. Hãy thử lại!', 'error');
+          
+          // Fallback: hiển thị hướng dẫn thay thế
+          if (isMobile) {
+            setTimeout(() => {
+              showVoiceStatus('📱 Thử đóng các app khác và thử lại', 'info');
+            }, 3000);
+          }
+        }
       }
     }
     
@@ -537,24 +650,36 @@
       const statusDiv = document.createElement('div');
       statusDiv.className = 'voice-status';
       statusDiv.textContent = message;
+      
+      // Styling khác biệt cho mobile và desktop
+      const bgColor = type === 'error' ? '#dc3545' : 
+                     type === 'success' ? '#28a745' : 
+                     type === 'warning' ? '#ffc107' : '#17a2b8';
+      
       statusDiv.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
+        ${isMobile ? 'top: 50%; left: 50%; transform: translate(-50%, -50%)' : 'top: 20px; right: 20px'};
+        background: ${bgColor};
+        color: ${type === 'warning' ? '#212529' : 'white'};
+        padding: ${isMobile ? '15px 25px' : '10px 20px'};
+        border-radius: ${isMobile ? '10px' : '5px'};
         z-index: 9999;
-        font-size: 14px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-size: ${isMobile ? '16px' : '14px'};
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        max-width: ${isMobile ? '80vw' : 'auto'};
+        text-align: center;
       `;
       
       document.body.appendChild(statusDiv);
       
+      // Thời gian hiển thị khác nhau cho mobile
+      const displayTime = isMobile ? 2000 : 3000;
       setTimeout(() => {
-        statusDiv.remove();
-      }, 3000);
+        if (statusDiv.parentNode) {
+          statusDiv.remove();
+        }
+      }, displayTime);
     }
     
     // Sử dụng MutationObserver để theo dõi thay đổi DOM
