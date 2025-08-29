@@ -150,13 +150,13 @@
   width: 100%;
 }
 
-/* Styling cho file upload */
-.chat-file-input-wrapper {
+/* Styling cho file upload và voice input */
+.chat-file-input-wrapper, .chat-voice-input-wrapper {
   position: relative;
   display: inline-block;
 }
 
-.chat-file-input-button {
+.chat-file-input-button, .chat-voice-input-button {
   background: var(--chat--toggle--background, #FB6A18);
   color: var(--chat--toggle--color, white);
   border: none;
@@ -168,13 +168,31 @@
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s;
+  margin-left: 0.5rem;
 }
 
-.chat-file-input-button:hover {
+.chat-file-input-button:hover, .chat-voice-input-button:hover {
   background: var(--chat--toggle--hover--background, #f46c1a);
 }
 
-.chat-file-input-button svg {
+.chat-voice-input-button.recording {
+  background: #dc3545;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+.chat-file-input-button svg, .chat-voice-input-button svg {
   width: 20px;
   height: 20px;
   fill: currentColor;
@@ -228,6 +246,69 @@
   font-size: 0.75rem;
 }
 
+/* Voice input status notifications */
+.voice-status {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-family: var(--chat--font-family) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  z-index: 10000 !important;
+  transition: all 0.3s ease !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Recording indicator cho textarea */
+.chat-inputs textarea.listening {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
+}
+
+/* Floating voice button - backup solution */
+.floating-voice-button {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--chat--toggle--background, #FB6A18);
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.floating-voice-button:hover {
+  background: var(--chat--toggle--hover--background, #f46c1a);
+  transform: scale(1.1);
+}
+
+.floating-voice-button.recording {
+  background: #dc3545;
+  animation: pulse 1.5s infinite;
+}
+
+.floating-voice-button svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.floating-voice-button.show {
+  display: flex;
+}
+
   </style>
 
   <script type="module">
@@ -252,9 +333,323 @@
         },
       },
     });
+
+    // Voice Input Functionality
+    let recognition = null;
+    let isRecording = false;
+
+    function initVoiceInput() {
+      // Kiểm tra Web Speech API support
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'vi-VN'; // Tiếng Việt
+        
+        recognition.onstart = function() {
+          isRecording = true;
+          const voiceBtn = document.querySelector('.chat-voice-input-button');
+          const floatingBtn = document.getElementById('floatingVoiceBtn');
+          const textarea = document.querySelector('.chat-inputs textarea');
+          
+          if (voiceBtn) {
+            voiceBtn.classList.add('recording');
+            voiceBtn.title = 'Đang ghi âm... Nhấn để dừng';
+          }
+          if (floatingBtn) {
+            floatingBtn.classList.add('recording');
+            floatingBtn.title = 'Đang ghi âm... Nhấn để dừng';
+          }
+          if (textarea) {
+            textarea.classList.add('listening');
+          }
+        };
+        
+        recognition.onresult = function(event) {
+          let finalTranscript = '';
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          const textarea = document.querySelector('.chat-inputs textarea');
+          if (textarea) {
+            if (finalTranscript) {
+              textarea.value = finalTranscript;
+              // Trigger input event để chat widget nhận diện có text
+              textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        };
+        
+        recognition.onend = function() {
+          isRecording = false;
+          const voiceBtn = document.querySelector('.chat-voice-input-button');
+          const floatingBtn = document.getElementById('floatingVoiceBtn');
+          const textarea = document.querySelector('.chat-inputs textarea');
+          
+          if (voiceBtn) {
+            voiceBtn.classList.remove('recording');
+            voiceBtn.title = 'Nhấn để ghi âm giọng nói';
+          }
+          if (floatingBtn) {
+            floatingBtn.classList.remove('recording');
+            floatingBtn.title = 'Nhấn để ghi âm giọng nói';
+          }
+          if (textarea) {
+            textarea.classList.remove('listening');
+          }
+        };
+        
+        recognition.onerror = function(event) {
+          console.error('Speech recognition error:', event.error);
+          isRecording = false;
+          const voiceBtn = document.querySelector('.chat-voice-input-button');
+          const floatingBtn = document.getElementById('floatingVoiceBtn');
+          const textarea = document.querySelector('.chat-inputs textarea');
+          
+          if (voiceBtn) {
+            voiceBtn.classList.remove('recording');
+            voiceBtn.title = 'Nhấn để ghi âm giọng nói';
+          }
+          if (floatingBtn) {
+            floatingBtn.classList.remove('recording');
+            floatingBtn.title = 'Nhấn để ghi âm giọng nói';
+          }
+          if (textarea) {
+            textarea.classList.remove('listening');
+          }
+          
+          let errorMsg = 'Có lỗi xảy ra khi ghi âm';
+          switch(event.error) {
+            case 'no-speech':
+              errorMsg = 'Không phát hiện giọng nói';
+              break;
+            case 'audio-capture':
+              errorMsg = 'Không thể truy cập microphone';
+              break;
+            case 'not-allowed':
+              errorMsg = 'Quyền truy cập microphone bị từ chối';
+              break;
+          }
+          
+          // Hiển thị thông báo lỗi tạm thời
+          showVoiceStatus(errorMsg, 'error');
+        };
+      }
+      
+      // Thêm nút voice input vào chat interface
+      addVoiceButton();
+    }
+    
+    function addVoiceButton() {
+      // Thử tìm các selector khác nhau và thử nhiều lần
+      const selectors = [
+        '.chat-inputs-controls[data-v-31e29ba2]',
+        '.chat-inputs-controls',
+        '.chat-inputs[data-v-31e29ba2] .chat-inputs-controls',
+        '.chat-inputs .chat-inputs-controls'
+      ];
+      
+      let chatInputsControls = null;
+      for (const selector of selectors) {
+        chatInputsControls = document.querySelector(selector);
+        if (chatInputsControls) break;
+      }
+      
+      if (chatInputsControls && !document.querySelector('.chat-voice-input-button')) {
+        console.log('Found chat controls, adding voice button...');
+        
+        const voiceWrapper = document.createElement('div');
+        voiceWrapper.className = 'chat-voice-input-wrapper';
+        
+        const voiceButton = document.createElement('button');
+        voiceButton.className = 'chat-voice-input-button';
+        voiceButton.title = 'Nhấn để ghi âm giọng nói';
+        voiceButton.type = 'button';
+        
+        voiceButton.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        `;
+        
+        voiceButton.addEventListener('click', toggleVoiceRecording);
+        
+        voiceWrapper.appendChild(voiceButton);
+        
+        // Thử thêm vào vị trí đầu tiên
+        if (chatInputsControls.firstChild) {
+          chatInputsControls.insertBefore(voiceWrapper, chatInputsControls.firstChild);
+        } else {
+          chatInputsControls.appendChild(voiceWrapper);
+        }
+        
+        console.log('Voice button added successfully!');
+        
+        // Kiểm tra quyền truy cập microphone
+        navigator.mediaDevices?.getUserMedia({ audio: true })
+          .then(() => {
+            console.log('Microphone access granted');
+          })
+          .catch((err) => {
+            console.warn('Microphone access denied:', err);
+            voiceButton.style.opacity = '0.5';
+            voiceButton.title = 'Không thể truy cập microphone';
+          });
+      } else if (!chatInputsControls) {
+        console.log('Chat controls not found, retrying...');
+        // Thử lại sau 1 giây
+        setTimeout(addVoiceButton, 1000);
+      }
+    }
+    
+    function toggleVoiceRecording() {
+      if (!recognition) {
+        showVoiceStatus('Trình duyệt không hỗ trợ nhận diện giọng nói', 'error');
+        return;
+      }
+      
+      if (isRecording) {
+        recognition.stop();
+        showVoiceStatus('Đã dừng ghi âm', 'success');
+      } else {
+        recognition.start();
+        showVoiceStatus('Bắt đầu ghi âm...', 'info');
+      }
+    }
+    
+    function showVoiceStatus(message, type = 'info') {
+      const existingStatus = document.querySelector('.voice-status');
+      if (existingStatus) {
+        existingStatus.remove();
+      }
+      
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'voice-status';
+      statusDiv.textContent = message;
+      statusDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 9999;
+        font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      `;
+      
+      document.body.appendChild(statusDiv);
+      
+      setTimeout(() => {
+        statusDiv.remove();
+      }, 3000);
+    }
+    
+    // Sử dụng MutationObserver để theo dõi thay đổi DOM
+    function observeForChatWidget() {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            // Kiểm tra xem có chat inputs controls nào được thêm vào không
+            const addedNodes = Array.from(mutation.addedNodes);
+            const hasRelevantChanges = addedNodes.some(node => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                return node.querySelector && (
+                  node.querySelector('.chat-inputs-controls') ||
+                  node.querySelector('.chat-inputs') ||
+                  node.classList?.contains('chat-inputs') ||
+                  node.classList?.contains('chat-inputs-controls')
+                );
+              }
+              return false;
+            });
+            
+            if (hasRelevantChanges && !document.querySelector('.chat-voice-input-button')) {
+              console.log('Chat widget detected, adding voice button...');
+              setTimeout(addVoiceButton, 100);
+            }
+          }
+        });
+      });
+
+      // Quan sát toàn bộ body
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+      
+      // Dừng observe sau 30 giây để tránh overhead
+      setTimeout(() => {
+        observer.disconnect();
+      }, 30000);
+    }
+    
+    // Khởi tạo voice input khi DOM đã ready
+    document.addEventListener('DOMContentLoaded', () => {
+      initVoiceInput();
+      observeForChatWidget();
+    });
+    
+    // Khởi tạo ngay nếu DOM đã ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initVoiceInput();
+        observeForChatWidget();
+      });
+    } else {
+      initVoiceInput();
+      observeForChatWidget();
+    }
+    
+    // Kích hoạt floating voice button
+    function initFloatingVoiceButton() {
+      const floatingBtn = document.getElementById('floatingVoiceBtn');
+      if (floatingBtn) {
+        floatingBtn.addEventListener('click', toggleVoiceRecording);
+        
+        // Hiển thị floating button sau 2 giây nếu không tìm thấy inline button
+        setTimeout(() => {
+          if (!document.querySelector('.chat-voice-input-button')) {
+            console.log('Showing floating voice button...');
+            floatingBtn.classList.add('show');
+          }
+        }, 2000);
+      }
+    }
+    
+    // Thêm thêm một timeout backup để đảm bảo
+    setTimeout(() => {
+      if (!document.querySelector('.chat-voice-input-button')) {
+        console.log('Backup: Adding voice button after 3 seconds...');
+        addVoiceButton();
+      }
+    }, 3000);
+    
+    // Khởi tạo floating button ngay lập tức
+    initFloatingVoiceButton();
   </script>
 </head>
 <body>
   <div id="chat-widget-container"></div>
+  
+  <!-- Floating Voice Button - Backup Solution -->
+  <button class="floating-voice-button" id="floatingVoiceBtn" title="Nhấn để ghi âm giọng nói">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+    </svg>
+  </button>
 </body>
 </html>
