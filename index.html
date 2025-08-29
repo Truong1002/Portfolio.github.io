@@ -322,6 +322,155 @@
   display: flex;
 }
 
+/* File History Panel */
+.file-history-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--chat--color-primary, #FB6A18);
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.file-history-toggle:hover {
+  background: var(--chat--toggle--hover--background, #f46c1a);
+  transform: scale(1.1);
+}
+
+.file-history-toggle svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.file-history-panel {
+  position: fixed !important;
+  top: 0 !important;
+  right: -350px;
+  width: 350px !important;
+  height: 100vh !important;
+  background: white !important;
+  box-shadow: -3px 0 15px rgba(0, 0, 0, 0.1) !important;
+  z-index: 9999 !important;
+  transition: right 0.3s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.file-history-panel.open {
+  right: 0 !important;
+  transform: translateX(0) !important;
+  display: flex !important;
+}
+
+.file-history-header {
+  background: var(--chat--color-primary, #FB6A18);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-history-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-history-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.file-history-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.file-history-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.file-history-stats {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.file-item {
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.file-item:hover {
+  background: #f8f9fa;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+
+
+.file-history-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.btn-clear-all {
+  width: 100%;
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-clear-all:hover {
+  background: #c82333;
+}
+
+.btn-clear-all:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .floating-voice-button {
@@ -352,6 +501,16 @@
   .chat-voice-input-button svg, .chat-file-input-button svg {
     width: 24px;
     height: 24px;
+  }
+  
+  .file-history-panel {
+    width: 100vw;
+    right: -100vw;
+  }
+  
+  .file-history-toggle {
+    top: 15px;
+    right: 15px;
   }
 }
 
@@ -548,7 +707,6 @@
       }
       
       if (chatInputsControls && !document.querySelector('.chat-voice-input-button')) {
-        console.log('Found chat controls, adding voice button...');
         
         const voiceWrapper = document.createElement('div');
         voiceWrapper.className = 'chat-voice-input-wrapper';
@@ -576,12 +734,10 @@
           chatInputsControls.appendChild(voiceWrapper);
         }
         
-        console.log('Voice button added successfully!');
         
         // Kiểm tra quyền truy cập microphone
         navigator.mediaDevices?.getUserMedia({ audio: true })
           .then(() => {
-            console.log('Microphone access granted');
           })
           .catch((err) => {
             console.warn('Microphone access denied:', err);
@@ -589,7 +745,6 @@
             voiceButton.title = 'Không thể truy cập microphone';
           });
       } else if (!chatInputsControls) {
-        console.log('Chat controls not found, retrying...');
         // Thử lại sau 1 giây
         setTimeout(addVoiceButton, 1000);
       }
@@ -702,7 +857,6 @@
             });
             
             if (hasRelevantChanges && !document.querySelector('.chat-voice-input-button')) {
-              console.log('Chat widget detected, adding voice button...');
               setTimeout(addVoiceButton, 100);
             }
           }
@@ -747,7 +901,6 @@
         // Hiển thị floating button sau 2 giây nếu không tìm thấy inline button
         setTimeout(() => {
           if (!document.querySelector('.chat-voice-input-button')) {
-            console.log('Showing floating voice button...');
             floatingBtn.classList.add('show');
           }
         }, 2000);
@@ -757,13 +910,329 @@
     // Thêm thêm một timeout backup để đảm bảo
     setTimeout(() => {
       if (!document.querySelector('.chat-voice-input-button')) {
-        console.log('Backup: Adding voice button after 3 seconds...');
         addVoiceButton();
       }
     }, 3000);
     
     // Khởi tạo floating button ngay lập tức
     initFloatingVoiceButton();
+
+    // File History Management System
+    const FILE_HISTORY_KEY = 'chatbot_uploaded_files';
+    let fileHistory = [];
+
+
+
+    // File History Functions
+    function loadFileHistory() {
+      try {
+        const saved = localStorage.getItem(FILE_HISTORY_KEY);
+        fileHistory = saved ? JSON.parse(saved) : [];
+      } catch (error) {
+        console.error('Error loading file history:', error);
+        fileHistory = [];
+      }
+    }
+
+    function saveFileHistory() {
+      try {
+        localStorage.setItem(FILE_HISTORY_KEY, JSON.stringify(fileHistory));
+      } catch (error) {
+        console.error('Error saving file history:', error);
+      }
+    }
+
+    function addFileToHistory(file) {
+      // Kiểm tra file đã tồn tại chưa (dựa trên tên và size)
+      const existingFile = fileHistory.find(f => 
+        f.name === file.name && f.size === file.size
+      );
+      
+      if (existingFile) {
+        console.log('File already exists, skipping:', file.name);
+        return existingFile;
+      }
+      
+      const fileInfo = {
+        id: Date.now() + Math.random().toString(36).substr(2, 9),
+        name: file.name || 'Unknown file',
+        size: file.size || 0,
+        type: file.type || 'application/octet-stream',
+        uploadedAt: new Date().toISOString()
+      };
+      
+      // Thêm vào đầu danh sách
+      fileHistory.unshift(fileInfo);
+      
+      // Giới hạn 100 file
+      if (fileHistory.length > 100) {
+        fileHistory = fileHistory.slice(0, 100);
+      }
+      
+      saveFileHistory();
+      updateFileHistoryDisplay();
+      
+      console.log('File added to history:', fileInfo.name);
+      return fileInfo;
+    }
+
+
+
+    function clearAllFiles() {
+      if (confirm('Bạn có chắc muốn xóa tất cả file trong danh sách?')) {
+        fileHistory = [];
+        saveFileHistory();
+        updateFileHistoryDisplay();
+      }
+    }
+
+    function updateFileHistoryDisplay() {
+      const content = document.getElementById('fileHistoryContent');
+      const stats = document.getElementById('fileHistoryStats');
+      
+      if (!content) return;
+      
+      stats.innerHTML = `Tổng cộng: <strong>${fileHistory.length} file</strong>`;
+      
+      if (fileHistory.length === 0) {
+        content.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">Chưa có file nào</div>';
+        return;
+      }
+      
+      const itemsHTML = fileHistory.map(file => `
+        <div class="file-item">${file.name}</div>
+      `).join('');
+      
+      content.innerHTML = itemsHTML;
+    }
+
+    // File History Panel Controls
+    function initFileHistory() {
+      const toggle = document.getElementById('fileHistoryToggle');
+      const panel = document.getElementById('fileHistoryPanel');
+      const closeBtn = document.getElementById('fileHistoryClose');
+      
+      
+      if (!toggle || !panel || !closeBtn) {
+        console.error('Missing elements for file history');
+        return;
+      }
+      
+      // Load history from localStorage
+      loadFileHistory();
+      updateFileHistoryDisplay();
+      
+      // Toggle panel with debug
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const wasOpen = panel.classList.contains('open');
+        
+        panel.classList.toggle('open');
+        
+        const isNowOpen = panel.classList.contains('open');
+        
+        if (isNowOpen) {
+          updateFileHistoryDisplay();
+          // Force styles for debugging
+          panel.style.right = '0px';
+          panel.style.display = 'flex';
+        }
+      });
+      
+      // Close panel
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        panel.classList.remove('open');
+        
+        // Force close with inline styles
+        panel.style.right = '-350px';
+      });
+      
+      // Close when clicking outside (disabled temporarily)
+      setTimeout(() => {
+        document.addEventListener('click', (e) => {
+          if (panel.classList.contains('open')) {
+            if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+              console.log('Clicking outside, closing panel');
+              panel.classList.remove('open');
+            }
+          }
+        });
+      }, 2000);
+      
+      // Mark as initialized
+      toggle.setAttribute('data-initialized', 'true');
+      
+      console.log('File history initialized successfully');
+    }
+    
+    // Debug functions for manual testing
+    window.testPanel = () => {
+      const panel = document.getElementById('fileHistoryPanel');
+      if (panel) {
+        console.log('Manual toggle test...');
+        const isCurrentlyOpen = panel.classList.contains('open');
+        
+        if (isCurrentlyOpen) {
+          // Close panel
+          panel.classList.remove('open');
+          panel.style.right = '-350px';
+          console.log('Panel CLOSED');
+        } else {
+          // Open panel
+          panel.classList.add('open');
+          panel.style.right = '0px';
+          panel.style.display = 'flex';
+          updateFileHistoryDisplay();
+          console.log('Panel OPENED');
+        }
+        
+        return panel.classList.contains('open');
+      }
+      return false;
+    };
+    
+    window.forceShowPanel = () => {
+      const panel = document.getElementById('fileHistoryPanel');
+      if (panel) {
+        panel.style.cssText = 'position: fixed !important; top: 0 !important; right: 0px !important; width: 350px !important; height: 100vh !important; background: white !important; z-index: 9999 !important; display: flex !important; flex-direction: column !important; box-shadow: -3px 0 15px rgba(0,0,0,0.1) !important;';
+        panel.classList.add('open');
+        updateFileHistoryDisplay();
+        console.log('Panel forced to show');
+        return true;
+      }
+      return false;
+    };
+    
+    window.closePanel = () => {
+      const panel = document.getElementById('fileHistoryPanel');
+      if (panel) {
+        panel.classList.remove('open');
+        panel.style.right = '-350px';
+        console.log('Panel forced to close');
+        return true;
+      }
+      return false;
+    };
+
+    // Hook into file upload events - Simplified to avoid duplicates
+    function hookFileUploadEvents() {
+      console.log('Setting up file upload tracking...');
+      
+      // Only use one method to avoid duplicates
+      const originalFetch = window.fetch;
+      
+      window.fetch = function(...args) {
+        const [url, options] = args;
+        if (options && options.body instanceof FormData) {
+          for (let [key, value] of options.body.entries()) {
+            if (value instanceof File) {
+              console.log('File detected in fetch:', value.name);
+              // Remove setTimeout to avoid race conditions
+              addFileToHistory(value);
+            }
+          }
+        }
+        return originalFetch.apply(this, args);
+      };
+      
+      console.log('File upload tracking setup completed (fetch only)');
+    }
+
+    // Test function to add sample files
+    function addTestFiles() {
+      const testFiles = [
+        { name: 'document.pdf', size: 2048576, type: 'application/pdf' },
+        { name: 'image.jpg', size: 1024000, type: 'image/jpeg' },
+        { name: 'data.xlsx', size: 512000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+        { name: 'readme.txt', size: 8192, type: 'text/plain' }
+      ];
+      
+      // Clear existing test files first
+      fileHistory = fileHistory.filter(f => 
+        !testFiles.some(tf => tf.name === f.name && tf.size === f.size)
+      );
+      
+      testFiles.forEach((fileData, index) => {
+        setTimeout(() => {
+          addFileToHistory(fileData);
+        }, index * 100);
+      });
+      
+      setTimeout(() => {
+        showVoiceStatus('Đã thêm 4 file test vào lịch sử!', 'success');
+      }, 500);
+    }
+
+
+
+    // Make functions global
+    window.clearAllFiles = clearAllFiles;
+    window.addTestFiles = addTestFiles;
+    
+    // Debug function to check duplicates
+    window.checkDuplicates = () => {
+      const names = fileHistory.map(f => f.name);
+      const duplicates = names.filter((name, index) => names.indexOf(name) !== index);
+      
+      if (duplicates.length > 0) {
+        console.log('🔍 Duplicate files found:', [...new Set(duplicates)]);
+        console.log('Total files:', fileHistory.length);
+        console.log('Unique files:', new Set(names).size);
+      } else {
+        console.log('✅ No duplicate files found');
+      }
+      
+      return duplicates;
+    };
+
+    // Initialize file history with multiple attempts
+    function initializeFileHistorySystem() {
+      console.log('Starting file history system initialization...');
+      console.log('Document ready state:', document.readyState);
+      
+      // Try immediate init
+      setTimeout(initFileHistory, 100);
+      hookFileUploadEvents();
+      
+      // Backup after 2 seconds
+      setTimeout(() => {
+        console.log('Backup initialization attempt...');
+        const toggle = document.getElementById('fileHistoryToggle');
+        if (toggle && !toggle.hasAttribute('data-initialized')) {
+          console.log('Retrying file history init...');
+          initFileHistory();
+        }
+      }, 2000);
+    }
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', initializeFileHistorySystem);
+    
+    if (document.readyState !== 'loading') {
+      initializeFileHistorySystem();
+    }
+    
+    // Final backup with window.onload
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const toggle = document.getElementById('fileHistoryToggle');
+        if (toggle && !toggle.hasAttribute('data-initialized')) {
+          console.log('Final backup: initializing file history...');
+          initFileHistory();
+        }
+        
+        // Show console help
+        console.log('%c📁 File Panel Debug Commands:', 'color: #FB6A18; font-weight: bold; font-size: 14px;');
+        console.log('🔧 Toggle panel: window.testPanel()');
+        console.log('🚀 Force show: window.forceShowPanel()');
+        console.log('❌ Force close: window.closePanel()');
+        console.log('🔍 Check duplicates: window.checkDuplicates()');
+      }, 1000);
+    });
   </script>
 </head>
 <body>
@@ -776,5 +1245,35 @@
       <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
     </svg>
   </button>
+  
+  <!-- File History Toggle Button -->
+  <button class="file-history-toggle" id="fileHistoryToggle" title="Xem danh sách file đã upload" onclick="window.testPanel && window.testPanel(); console.log('Onclick backup triggered');">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/>
+    </svg>
+  </button>
+  
+  <!-- File History Panel -->
+  <div class="file-history-panel" id="fileHistoryPanel">
+    <div class="file-history-header">
+      <h3>📁 File Đã Upload</h3>
+      <button class="file-history-close" id="fileHistoryClose" title="Đóng" onclick="document.getElementById('fileHistoryPanel').classList.remove('open'); document.getElementById('fileHistoryPanel').style.right='-350px'; console.log('Close onclick triggered');">×</button>
+    </div>
+    
+    <div class="file-history-stats" id="fileHistoryStats">
+      Tổng cộng: <strong>0 file</strong>
+    </div>
+    
+    <div class="file-history-content" id="fileHistoryContent">
+      <div style="padding: 2rem; text-align: center; color: #999;">Chưa có file nào</div>
+    </div>
+    
+    <div class="file-history-actions">
+       <button class="btn-clear-all" id="btnClearAll" onclick="clearAllFiles()" disabled>
+        🗑️ Xóa Tất Cả File
+      </button>
+      <!-- Panel chỉ hiển thị danh sách file, không có action buttons -->
+    </div>
+  </div>
 </body>
 </html>
