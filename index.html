@@ -1,110 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chatbot Fullscreen</title>
+
+  <!-- ✅ Thêm CSS chính thức từ @n8n -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" />
+
+  <style>
+    @charset "UTF-8";
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    #chat-widget-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .chat-messages[data-v-31e29ba2] {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    :root {
+      --chat--color-primary: #FB6A18;
+      --chat--color-primary-shade-50: #FB6A18;
+      --chat--color-primary-shade-100: #FB6A18;
+      --chat--color-secondary: #f46c1a;
+      --chat--color-white: #ffffff;
+      --chat--color-light: #f2f4f8;
+      --chat--color-dark: #101330;
+      --chat--color-disabled: #777980;
+      --chat--color-typing: #404040;
+
+      --chat--spacing: 1rem;
+      --chat--border-radius: 0.25rem;
+      --chat--font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+
+      --chat--input--background: var(--chat--color-white);
+      --chat--input--send--button--color: var(--chat--color-white);
+      --chat--input--send--button--background-hover: var(--chat--color-primary-shade-50);
+
+      --chat--toggle--background: var(--chat--color-primary);
+      --chat--toggle--hover--background: var(--chat--color-primary-shade-50);
+      --chat--toggle--active--background: var(--chat--color-primary-shade-100);
+      --chat--toggle--color: var(--chat--color-white);
+      --chat--message--border-radius:10px;
+      --chat--message--user--color:white
+    }
+
+    .chat-inputs[data-v-31e29ba2] {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 0.5rem;
+      border-top: 1px solid #ddd;
+      z-index: 10;
+    }
+
+    .chat-inputs textarea[data-v-31e29ba2] {
+      flex: 1;
+      height: 50px !important;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border-radius: 0.25rem;
+      border: 1px solid #ccc;
+      resize: none;
+      box-sizing: border-box;
+      background: var(--chat--input--background);
+    }
+
+    .chat-inputs-controls[data-v-31e29ba2] {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    .chat-input-send-button[data-v-31e29ba2] {
+      height: 50px;
+      width: 50px;
+      background: var(--chat--toggle--background);
+      color: var(--chat--toggle--color);
+      border: none;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .chat-input-send-button[data-v-31e29ba2]:hover {
+      background: var(--chat--toggle--hover--background);
+    }
+
+    .chat-input-send-button[data-v-31e29ba2]:disabled {
+      cursor: not-allowed;
+      background: #ccc !important;
+    }
+
+    .chat-messages-list {
+      height: 100%;
+    }
+
+    .chat-layout .chat-header {
+      background-color: #FB6A18;
+      height: 2%;
+      align-items: left;
+    }
+    
+    .chat-layout .chat-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .chat-message-markdown a {
+  text-decoration: underline !important;
+}
+.chat-message-markdown a:hover{
+   color: #0066cc; /* Tuỳ chọn: màu link dễ nhận biết */
+}
+    html, body {
+  overflow-x: hidden;
+  width: 100%!important;
+}
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+#chat-widget-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+}
+
+  </style>
+
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+      webhookUrl: 'https://n8n-7tuvkz.tino.page/webhook/ec4e2f4e-352f-4f0d-8f24-c03427eeb8e7/chat',
+      target: '#chat-widget-container',
+      mode: 'fullscreen',
+      defaultLanguage: 'vi',
+      initialMessages: [
+  'Chào anh/chị 👋',
+  'Anh/chị đang tìm loại máy móc công trình nào? Tôi có thể hỗ trợ ngay!'
+],
+      i18n: {
+        vi: {
+          title: '🤖 Chợ Máy Công Trình ',
+          subtitle: '',
+          inputPlaceholder: 'Nhập câu hỏi của bạn...',
+          getStarted: 'Bắt đầu hội thoại',
+        },
+      },
+    });
+  </script>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">Portfolio</div>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <div class="burger">
-                <div class="line1"></div>
-                <div class="line2"></div>
-                <div class="line3"></div>
-            </div>
-        </nav>
-    </header>
-
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>Hi, I'm <span class="highlight">Your Name</span></h1>
-            <p>Web Developer & Designer</p>
-            <a href="#contact" class="cta-button">Get in Touch</a>
-        </div>
-    </section>
-
-    <section id="about" class="about">
-        <h2>About Me</h2>
-        <div class="about-content">
-            <div class="about-text">
-                <p>I am a passionate web developer with expertise in front-end development. I love creating beautiful and functional websites that provide great user experiences.</p>
-                <div class="skills">
-                    <h3>Skills</h3>
-                    <div class="skill-tags">
-                        <span>HTML</span>
-                        <span>CSS</span>
-                        <span>JavaScript</span>
-                        <span>React</span>
-                        <span>Node.js</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="projects" class="projects">
-        <h2>My Projects</h2>
-        <div class="project-grid">
-            <div class="project-card">
-                <img src="https://via.placeholder.com/300x200" alt="Project 1">
-                <h3>Project 1</h3>
-                <p>Description of project 1</p>
-                <a href="#" class="project-link">View Project</a>
-            </div>
-            <div class="project-card">
-                <img src="https://via.placeholder.com/300x200" alt="Project 2">
-                <h3>Project 2</h3>
-                <p>Description of project 2</p>
-                <a href="#" class="project-link">View Project</a>
-            </div>
-            <div class="project-card">
-                <img src="https://via.placeholder.com/300x200" alt="Project 3">
-                <h3>Project 3</h3>
-                <p>Description of project 3</p>
-                <a href="#" class="project-link">View Project</a>
-            </div>
-        </div>
-    </section>
-
-    <section id="contact" class="contact">
-        <h2>Contact Me</h2>
-        <div class="contact-content">
-            <div class="contact-info">
-                <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
-                    <p>your.email@example.com</p>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-phone"></i>
-                    <p>+123 456 7890</p>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <p>Your Location</p>
-                </div>
-            </div>
-            <div class="social-links">
-                <a href="#"><i class="fab fa-github"></i></a>
-                <a href="#"><i class="fab fa-linkedin"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 Your Name. All rights reserved.</p>
-    </footer>
-
-    <script src="script.js"></script>
+  <div id="chat-widget-container"></div>
 </body>
-</html> 
+</html>
