@@ -150,6 +150,84 @@
   width: 100%;
 }
 
+/* Styling cho file upload */
+.chat-file-input-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.chat-file-input-button {
+  background: var(--chat--toggle--background, #FB6A18);
+  color: var(--chat--toggle--color, white);
+  border: none;
+  border-radius: 0.25rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.chat-file-input-button:hover {
+  background: var(--chat--toggle--hover--background, #f46c1a);
+}
+
+.chat-file-input-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* File upload progress và thông báo */
+.chat-file-upload-status {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  z-index: 1000;
+}
+
+/* Styling cho file attachments trong message */
+.chat-message-attachment {
+  background: rgba(251, 106, 24, 0.1);
+  border: 1px solid #FB6A18;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chat-message-attachment-icon {
+  width: 20px;
+  height: 20px;
+  color: #FB6A18;
+}
+
+.chat-message-attachment-info {
+  flex: 1;
+}
+
+.chat-message-attachment-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.chat-message-attachment-size {
+  color: #666;
+  font-size: 0.75rem;
+}
+
   </style>
 
   <script type="module">
@@ -160,6 +238,8 @@
       target: '#chat-widget-container',
       mode: 'fullscreen',
       defaultLanguage: 'vi',
+      allowFileUploads: true,
+      allowedFilesMimeTypes: 'image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       initialMessages: [
   
 ],
